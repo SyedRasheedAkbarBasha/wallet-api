@@ -1,17 +1,20 @@
+
+
 import rateLimiter from "../db/redis.js";
 
-const rateLimit = async(req,res,next)=>{
+const rateLimit = async(req, res, next) => {
     try {
-        //put your ipadress in this ("")
-       const{sucess} = await rateLimiter.limit("my-limit"); 
-       if(!sucess){
-           return res.status(429).json({
-            message:"Too Many Request"
-           });
-       }
+        const { success } = await rateLimiter.limit("my-limit"); 
+        if(!success){
+            return res.status(429).json({
+                message: "Too Many Requests"
+            });
+        }
+        next();
     } catch (error) {
-        console.log("RateLimit Error",error);
-        next(error);
+        console.log("⚠️ RateLimit disabled due to Redis error:", error.message);
+        // Continue without rate limiting if Redis fails
+        next();
     }
 }
 
