@@ -1,11 +1,19 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 import { sql } from "./db/db.js";
 import rateLimit from "./middleware/middle.js";
 import transactionRouters from "./routes/transactionRouter.js"
 import job from "./db/cron.js"
 dotenv.config();
 const app = express();
+
+// Enable CORS for all origins (adjust for production if needed)
+app.use(cors({
+  origin: "*", // Allow all origins for development
+  methods: ["GET", "POST", "DELETE", "PUT", "PATCH"],
+  credentials: true
+}));
 
 //activate cron
 
