@@ -2,12 +2,19 @@ import cron from "cron";
 import https from "https";
 
 const job = new cron.CronJob("*/14 * * * *", function () {
+  const apiUrl = process.env.API_URL || 'https://wallet-api-ejp8.onrender.com/api/health';
+  
   https
-    .get(process.env.API_URL, (res) => {
-      if (res.statusCode === 200) console.log("GET request sent successfully");
-      else console.log("GET request failed", res.statusCode);
+    .get(apiUrl, (res) => {
+      if (res.statusCode === 200) {
+        console.log("✅ Health check request sent successfully");
+      } else {
+        console.log("⚠️ Health check request failed with status:", res.statusCode);
+      }
     })
-    .on("error", (e) => console.error("Error while sending request", e));
+    .on("error", (e) => {
+      console.error("❌ Error while sending health check request:", e.message);
+    });
 });
 
 export default job;

@@ -1,163 +1,101 @@
 import { sql } from "../db/db.js";
 
-// const handleError = (res, error, message) => {
-//     console.error(message, error);
-//     return res.status(500).json({ 
-//         message: "Internal server error",
-//         error: process.env.NODE_ENV === 'development' ? error.message : undefined
-//     });
-// };
+export async function getTransactionsByUserId(req, res) {
+  try {
+    const { userId } = req.params;
 
-export async function getTransactionId(req,res) {
-    
-        try {
-           const{UserId} = req.params;
-           const transaction = await sql`SELECT * FROM transactions WHERE user_id = ${UserId} order by created_at desc`
-           return res.status(200).json(transaction); 
-        } catch (error) {
-            console.log("the error in getting transaction",error);
-            return res.status(500).json({message:"transaction Error"});
-        }
+    const transactions = await sql`
+        SELECT * FROM transactions WHERE user_id = ${userId} ORDER BY created_at DESC
+      `;
+
+    res.status(200).json(transactions);
+  } catch (error) {
+    console.log("Error getting the transactions", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export async function createTransaction(req, res) {
+  try {
+    const { title, amount, category, user_id } = req.body;
+
+    if (!title || !user_id || !category || amount === undefined) {
+      return res.status(400).json({ message: "All fields are required" });
     }
 
-export async function deleteTransaction(req,res){
-        
-            try {
-                const{ id } = req.params;
-                //it convert into number and check (is not a number)
-                if(isNaN(parseInt(id))){
-                     return res.status(500).json({message:"Invalid Transaction Id"});
-                }
-                const result = await sql`DELETE FROM transactions where id = ${id} returning *`
-                if((result.length === 0)){
-                    return res.status(500).json({message:"Transaction not deleted"});
-                }
-                return res.status(200).json({message:"Transaction Deleted SucessFully"});
-        
-            } catch (error) {
-                console.log("the error in deleting transaction",error);
-                return res.status(500).json({message:"transaction Error"});
-            }
-        }
+    const transaction = await sql`
+      INSERT INTO transactions(user_id,title,amount,category)
+      VALUES (${user_id},${title},${amount},${category})
+      RETURNING *
+    `;
 
-export async function insertTransaction(res,req){
-    
-        try {
-            const{ user_id,title,amount,category}=req.body;
-    
-            //why not !amount.. amount =0 is false when !amount it become true 
-            if(!title||amount === undefined|| !category || !user_id){
-                  //400 - bad request . invalid 
-                  return res.status(400).json({message:"Invalid Field Please Fill"});
-            }
-            //why await because js wait untill the statement is finished
-            const transaction = await sql`
-            insert into transactions(user_id,title,amount,category) values(${user_id},${title},${amount},${category}) returning *`
-            console.log(transaction);
-            return res.status(200).json({
-              message: "Successfully Transaction",
-              data: transaction[0]
-        });
-        } catch (error) {
-            console.log("the error in transaction",error);
-            return res.status(500).json({message:"transaction Error"});
-        }
+    console.log(transaction);
+    res.status(201).json(transaction[0]);
+  } catch (error) {
+    console.log("Error creating the transaction", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export async function deleteTransaction(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (isNaN(parseInt(id))) {
+      return res.status(400).json({ message: "Invalid transaction ID" });
     }
 
-export async function getTransactionDetials(res,req) {
-    
-        try{
-        const{UserId} = req.params;
-        const balance = await sql`SELECT COALESCE(SUM(amount),0) as balance FROM transactions where user_id = ${UserId}`;
-        const income  = await sql`SELECT COALESCE(SUM(amount),0) as income FROM transactions where user_id = ${UserId} AND amount > 0`;
-        const expense = await sql`SELECT COALESCE(SUM(amount),0) as expense FROM transactions where user_id = ${UserId} AND amount<0`;
-    
-        return res.status(200).json({
-            balance:balance[0].balance,
-            income :income[0].income,
-            expense:expense[0].expense
-        }
-        )}
-        catch(e){
-             console.log("the error in transaction",e);
-             return res.status(500).json({message:"transaction summary Error"});
-        }
+    const result = await sql`
+      DELETE FROM transactions WHERE id = ${id} RETURNING *
+    `;
+
+    if (result.length === 0) {
+      return res.status(404).json({ message: "Transaction not found" });
     }
 
+    res.status(200).json({ message: "Transaction deleted successfully" });
+  } catch (error) {
+    console.log("Error deleting the transaction", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
 
-// export async function getTransactionId(req, res) {
-//     try {
-//         const {UserId} = req.params;
-//         console.log("Fetching transactions for user:", UserId);
-        
-//         const transaction = await sql`SELECT * FROM transactions WHERE user_id = ${UserId} order by created_at desc`;
-//         console.log("Found transactions:", transaction.length);
-        
-//         return res.status(200).json(transaction);
-//     } catch (error) {
-//         console.error("Database error in getTransactionId:", error);
-//         return res.status(500).json({ 
-//             message: "Database error",
-//             error: process.env.NODE_ENV === 'development' ? error.message : undefined
-//         });
-//     }
-// }
+export async function getSummaryByUserId(req, res) {
+  try {
+    const { userId } = req.params;
 
-// export async function deleteTransaction(req, res) {
-//     try {
-//         const { id } = req.params;
-//         // it convert into number and check (is not a number)
-//         if (isNaN(parseInt(id))) {
-//             return res.status(500).json({ message: "Invalid Transaction Id" });
-//         }
-//         const result = await sql`DELETE FROM transactions where id = ${id} returning *`;
-//         if ((result.length === 0)) {
-//             return res.status(500).json({ message: "Transaction not deleted" });
-//         }
-//         return res.status(200).json({ message: "Transaction Deleted SucessFully" });
+    console.log(`Fetching summary for user: ${userId}`);
 
-//     } catch (error) {
-//        return handleError(res, error, "Error in getting transaction:");
-//     }
-// }
+    const balanceResult = await sql`
+      SELECT COALESCE(SUM(amount), 0) as balance FROM transactions WHERE user_id = ${userId}
+    `;
 
-// // ✅ CORRECTED: req comes first, then res
-// export async function insertTransaction(req, res) {
-//     try {
-//         const { user_id, title, amount, category } = req.body;
+    const incomeResult = await sql`
+      SELECT COALESCE(SUM(amount), 0) as income FROM transactions
+      WHERE user_id = ${userId} AND amount > 0
+    `;
 
-//         // why not !amount.. amount =0 is false when !amount it become true 
-//         if (!title || amount === undefined || !category || !user_id) {
-//             // 400 - bad request . invalid 
-//             return res.status(400).json({ message: "Invalid Field Please Fill" });
-//         }
-//         // why await because js wait untill the statement is finished
-//         const transaction = await sql`
-//             insert into transactions(user_id, title, amount, category) values(${user_id}, ${title}, ${amount}, ${category}) returning *`;
-//         console.log(transaction);
-//         return res.status(200).json({
-//             message: "Successfully Transaction",
-//             data: transaction[0]
-//         });
-//     } catch (error) {
-//        return handleError(res, error, "Error in getting transaction:");
-//     }
-// }
+    const expensesResult = await sql`
+      SELECT COALESCE(SUM(amount), 0) as expenses FROM transactions
+      WHERE user_id = ${userId} AND amount < 0
+    `;
 
-// // ✅ CORRECTED: req comes first, then res
-// export async function getTransactionDetials(req, res) {
-//     try {
-//         const { UserId } = req.params;
-//         const balance = await sql`SELECT COALESCE(SUM(amount), 0) as balance FROM transactions where user_id = ${UserId}`;
-//         const income = await sql`SELECT COALESCE(SUM(amount), 0) as income FROM transactions where user_id = ${UserId} AND amount > 0`;
-//         const expense = await sql`SELECT COALESCE(SUM(amount), 0) as expense FROM transactions where user_id = ${UserId} AND amount < 0`;
+    // Debug logging
+    console.log("Balance result:", balanceResult);
+    console.log("Income result:", incomeResult);
+    console.log("Expenses result:", expensesResult);
 
-//         return res.status(200).json({
-//             balance: balance[0].balance,
-//             income: income[0].income,
-//             expense: expense[0].expense
-//         });
-//     } catch (e) {
-//         return handleError(res, error, "Error in getting transaction:");
-//     }
-// }
+    // Handle cases where results might be empty arrays
+    const summary = {
+      balance: balanceResult && balanceResult[0] ? Number(balanceResult[0].balance) : 0,
+      income: incomeResult && incomeResult[0] ? Number(incomeResult[0].income) : 0,
+      expenses: expensesResult && expensesResult[0] ? Number(expensesResult[0].expenses) : 0,
+    };
+
+    console.log("Final summary:", summary);
+    res.status(200).json(summary);
+  } catch (error) {
+    console.log("Error getting the summary", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
