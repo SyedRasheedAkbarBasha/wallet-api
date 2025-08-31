@@ -3,8 +3,8 @@ import { Link,useRouter } from "expo-router";
 import { Image, Text, View,RefreshControl,TouchableOpacity,FlatList ,Alert} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 // Updated import path
-import { useState } from 'react'; 
-import SignOutButton from "../../components/signOutButton";
+import { useState } from 'react';
+import LogoutButton from "../../components/LogoutButton";
 import { BalanceCard } from "../../components/BalanceCard";
 import { TransactionItem } from "../../components/TransactionItem";
 import NoTransactionsFound from "../../components/NoTransactionsFound";
@@ -70,7 +70,7 @@ export default function Page() {
               <Ionicons name="add" size={20} color="#FFF" />
               <Text style={styles.addButtonText}>Add</Text>
             </TouchableOpacity>
-            <SignOutButton />
+            <LogoutButton />
           </View>
         </View>
 
