@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS dream_savings (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  amount NUMERIC(12, 2) NOT NULL CHECK (amount > 0),
+  created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
