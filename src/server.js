@@ -27,28 +27,25 @@ app.use(rateLimit);
 //if port doesnt have then 5001
 const PORT = process.env.PORT || 5001;
 
-//check health
-app.get("/api/health",(req,res)=>{
-    res.status(200).json({status:"ok"});
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
 });
 
-//create database
-// In server.js, enhance initDB
 async function initDB() {
     try {
         // Test connection
         await sql`SELECT 1 as test`;
         console.log("Database connected successfully");
         
-        // Check if table exists
-        const tableExists = await sql`
+        // Check if transactions table exists
+        const transactionsTableExists = await sql`
             SELECT EXISTS (
                 SELECT FROM information_schema.tables 
                 WHERE table_name = 'transactions'
             );
         `;
         
-        if (!tableExists[0].exists) {
+        if (!transactionsTableExists[0].exists) {
             console.log("Creating transactions table...");
             await sql`CREATE TABLE transactions(
                 id SERIAL PRIMARY KEY,
@@ -58,9 +55,33 @@ async function initDB() {
                 category VARCHAR(255) NOT NULL,
                 created_at DATE NOT NULL DEFAULT CURRENT_DATE 
             )`;
-            console.log("Table created successfully");
+            console.log("Transactions table created successfully");
         } else {
-            console.log("Table already exists");
+            console.log("Transactions table already exists");
+        }
+
+        // Check if dream_savings table exists
+        const dreamSavingsTableExists = await sql`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'dream_savings'
+            );
+        `;
+
+        if (!dreamSavingsTableExists[0].exists) {
+            console.log("Creating dream_savings table...");
+            await sql`
+                CREATE TABLE IF NOT EXISTS dream_savings (
+                   id SERIAL PRIMARY KEY,
+                   user_id VARCHAR(255) NOT NULL,
+                   title VARCHAR(255) NOT NULL,
+                   amount DECIMAL(10,2) NOT NULL,
+                   created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+            `;
+            console.log("Dream_savings table created successfully");
+        } else {
+            console.log("Dream_savings table already exists");
         }
 
     } catch (error) {
