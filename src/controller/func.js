@@ -46,11 +46,11 @@ export const getSummaryByUserId = async (req, res) => {
     const expensesResult = await sql`
       SELECT COALESCE(SUM(amount), 0) AS expenses FROM transactions WHERE user_id = ${userId} AND amount < 0
     `;
-    const balance = incomeResult[0].income + expensesResult[0].expenses;
+    const balance = Number(incomeResult[0].income) + Number(expensesResult[0].expenses);
     res.json({
       balance,
-      income: incomeResult[0].income,
-      expenses: expensesResult[0].expenses,
+      income: Number(incomeResult[0].income),
+      expenses: Number(expensesResult[0].expenses),
     });
   } catch (error) {
     console.error("Error fetching summary:", error);
@@ -77,7 +77,7 @@ export const getTransactionsByUserId = async (req, res) => {
 // Dream Savings handlers
 
 export const getDreamSavings = async (req, res) => {
-  const userId = req.user?.id || req.query.user_id;
+  const { userId } = req.params;
   if (!userId) {
     return res.status(400).json({ error: "User ID is required" });
   }
@@ -93,7 +93,7 @@ export const getDreamSavings = async (req, res) => {
 };
 
 export const addDreamSaving = async (req, res) => {
-  const userId = req.user?.id || req.body.user_id;
+  const { userId } = req.params;
   const { title, amount } = req.body;
   if (!userId || !title || !amount || amount <= 0) {
     return res.status(400).json({ error: "Invalid input" });
