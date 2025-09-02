@@ -1,7 +1,5 @@
 import { sql } from "../db/db.js";
 
-// import { sql } from "../db/db.js";
-
 export const createTransaction = async (req, res) => {
   const { user_id, title, amount, category } = req.body;
   if (!user_id || !title || !amount || !category) {
@@ -13,7 +11,7 @@ export const createTransaction = async (req, res) => {
       VALUES (${user_id}, ${title}, ${amount}, ${category})
       RETURNING *;
     `;
-    res.status(201).json(inserted[0]);
+    res.status(201).json();
   } catch (error) {
     console.error("Error creating transaction:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -37,7 +35,7 @@ export const deleteTransaction = async (req, res) => {
 };
 
 export const getSummaryByUserId = async (req, res) => {
-  const userId = req.params.user_id || req.query.user_id;
+  const { userId } = req.params;
   if (!userId) {
     return res.status(400).json({ error: "User ID is required" });
   }
@@ -61,7 +59,7 @@ export const getSummaryByUserId = async (req, res) => {
 };
 
 export const getTransactionsByUserId = async (req, res) => {
-  const userId = req.params.user_id || req.query.user_id;
+  const { userId } = req.params;
   if (!userId) {
     return res.status(400).json({ error: "User ID is required" });
   }
