@@ -20,5 +20,6 @@ router.delete("/:id", deleteTransaction);
 // Dream Savings routes
 router.get("/dream-savings/:userId", getDreamSavings);
 router.post("/dream-savings/:userId", addDreamSaving);
+router.delete("/dream-savings/:userId", deleteDreamSaving);
 
 export default router;

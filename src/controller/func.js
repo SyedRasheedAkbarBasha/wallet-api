@@ -110,3 +110,42 @@ export const addDreamSaving = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const deleteDreamSaving = async (req, res) => {
+  const { id } = req.body;
+  if (!id) {
+    return res.status(400).json({ error: "Dream saving ID is required" });
+  }
+  try {
+    // Get the dream saving to delete
+    const dreamSaving = await sql`
+      SELECT * FROM dream_savings WHERE id = ${id}
+    `;
+    if (dreamSaving.length === 0) {
+      return res.status(404).json({ error: "Dream saving not found" });
+    }
+    const userId = dreamSaving[0].user_id;
+
+    // Calculate total saved amount for this dream saving
+    const totalSavedResult = await sql`
+      SELECT COALESCE(SUM(amount), 0) AS total_saved FROM dream_savings WHERE user_id = ${userId}
+    `;
+    const totalSaved = totalSavedResult[0].total_saved;
+
+    // Add total saved amount to user's balance (assuming transactions table)
+    await sql`
+      INSERT INTO transactions (user_id, title, amount, category)
+      VALUES (${userId}, 'Dream Savings Payout', ${totalSaved}, 'income')
+    `;
+
+    // Delete all dream savings for this user
+    await sql`
+      DELETE FROM dream_savings WHERE user_id = ${userId}
+    `;
+
+    res.status(200).json({ message: "Dream product and savings deleted", totalSaved });
+  } catch (error) {
+    console.error("Error deleting dream saving:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
