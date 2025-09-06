@@ -65,7 +65,7 @@ export const getTransactionsByUserId = async (req, res) => {
   }
   try {
     const transactions = await sql`
-      SELECT * FROM transactions WHERE user_id = ${userId} ORDER BY created_at DESC
+      SELECT * FROM transactions WHERE user_id = ${userId} AND title != 'Dream Savings Payout' ORDER BY created_at DESC
     `;
     res.json(transactions);
   } catch (error) {
