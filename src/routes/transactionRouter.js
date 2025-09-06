@@ -1,11 +1,12 @@
 import express from "express";
-import { 
+import {
   createTransaction,
   deleteTransaction,
   getSummaryByUserId,
   getTransactionsByUserId,
   getDreamSavings,
   addDreamSaving,
+  deleteDreamSaving,
 } from "../controller/func.js";
 
 const router = express.Router();
